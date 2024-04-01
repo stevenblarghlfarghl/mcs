@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  api:
+    build: 
+      context: ./api
+    depends_on:
+      - pg
+    ports:
+      - "3000:3000"
+  mcs:
+    image: "mcs"
+    depends_on:
+      - pg
+      - api
+      - satellite
+    build: 
+      context: ./mcs
+  satellite:
+    image: "satellite"
+    depends_on:
+      - pg
+    build: 
+      context: ./satellite
+    ports:
+      - "3001:3001"
+  pg:
+    image: postgres:14.3-alpine
+    env_file: .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment: 
+        POSTGRES_USER: ${PG_USER}
+        POSTGRES_PASSWORD: ${PG_PASS}
+        POSTGRES_DB: ${PG_NAME}
+        POSTGRES_PORT: ${PG_PORT}
+    ports:
+      - "${PG_PORT}:5432"
+  pgadmin:
+    image: dpage/pgadmin4
+    environment: 
+        PGADMIN_DEFAULT_EMAIL: ${PG_USER}@takehome.com
+        PGADMIN_DEFAULT_PASSWORD: ${PG_PASS}
+    ports: 
+        - "5001:80"
